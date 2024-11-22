@@ -155,7 +155,7 @@ class Session(requests.Session):
             try:
                 r.raise_for_status()
             except requests.exceptions.HTTPError:
-                self.write_log("HTTPError")
+                self.write_log(f"HTTPError ({r.status_code}): {r.text}")
                 if r.status_code == 403:
                     if (
                         "message" in r.json()["errors"][0]
