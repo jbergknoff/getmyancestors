@@ -18,8 +18,9 @@ classifiers = [
 dependencies = [
     "babelfish==0.6.0",
     "diskcache==5.2.1",
-    "requests==2.25.1",
     "fake-useragent==1.2.1",
+    "requests==2.25.1",
+    "setuptools",
 ]
 dynamic = ["version", "readme"]
 
@@ -37,4 +38,3 @@ getmyancestors = ["fstogedcom.png"]
 getmyancestors = "getmyancestors.getmyancestors:main"
 mergemyancestors = "getmyancestors.mergemyancestors:main"
 fstogedcom = "getmyancestors.fstogedcom:main"
-

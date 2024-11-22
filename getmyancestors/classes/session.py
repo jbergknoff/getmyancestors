@@ -53,7 +53,7 @@ class Session(requests.Session):
                 self.get(url, headers=self.headers)
                 xsrf = self.cookies["XSRF-TOKEN"]
                 url = "https://ident.familysearch.org/login"
-                self.write_log("Downloading: " + url)
+                self.write_log("Logging in: " + url)
                 res = self.post(
                     url,
                     data={
@@ -63,37 +63,26 @@ class Session(requests.Session):
                     },
                     headers=self.headers,
                 )
-                try:
-                    data = res.json()
-                except ValueError:
-                    self.write_log("Invalid auth request")
-                    continue
-                if "loginError" in data:
-                    self.write_log(data["loginError"])
-                    return
-                if "redirectUrl" not in data:
-                    self.write_log(res.text)
-                    continue
-
-                url = data["redirectUrl"]
-                self.write_log("Downloading: " + url)
-                res = self.get(url, headers=self.headers)
                 res.raise_for_status()
 
-                url = f"https://ident.familysearch.org/cis-web/oauth2/v3/authorization?response_type=code&scope=openid profile email qualifies_for_affiliate_account country&client_id=a02j000000KTRjpAAH&redirect_uri=https://misbach.github.io/fs-auth/index_raw.html&username={self.username}"
-                self.write_log("Downloading: " + url)
-                response = self.get(url, allow_redirects=False, headers=self.headers)
-                location = response.headers["location"]
-                code = parse_qs(urlparse(location).query).get("code")
+                # We use this example API client (associated with https://github.com/misbach/fs-auth)
+                # in order to exchange username and password for an API access token.
+                client_id = "a02j000000KTRjpAAH"
+                url = f"https://ident.familysearch.org/cis-web/oauth2/v3/authorization?response_type=code&scope=openid profile email qualifies_for_affiliate_account country&client_id={client_id}&redirect_uri=https://misbach.github.io/fs-auth/&username={self.username}"
+                self.write_log("Getting an authorization code: " + url)
+                response = self.get(url, headers=self.headers)
+                response.raise_for_status()
+                code = parse_qs(urlparse(response.url).query).get("code")[0]
+
                 url = "https://ident.familysearch.org/cis-web/oauth2/v3/token"
-                self.write_log("Downloading: " + url)
+                self.write_log("Exchanging for an access token: " + url)
                 res = self.post(
                     url,
                     data={
                         "grant_type": "authorization_code",
-                        "client_id": "a02j000000KTRjpAAH",
+                        "client_id": client_id,
                         "code": code,
-                        "redirect_uri": "https://misbach.github.io/fs-auth/index_raw.html",
+                        "redirect_uri": "https://misbach.github.io/fs-auth/",
                     },
                     headers=self.headers,
                 )
